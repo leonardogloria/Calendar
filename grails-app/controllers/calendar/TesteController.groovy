@@ -31,13 +31,13 @@ class TesteController {
         }
         def event3 = new Event(title: "Just Normal Event").with {
             startTime = tomorrow.toDate()
-            endTime= tomorrow.plusMinutes(30).toDate()
+            endTime= tomorrow.plusDays(1).toDate()
             isRecurring = false
             save()
         }
 
     }
-    def cout(){
+    def count(){
         println Event.count()
     }
 

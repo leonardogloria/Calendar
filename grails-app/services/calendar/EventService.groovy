@@ -2,6 +2,9 @@ package calendar
 
 import grails.transaction.Transactional
 import org.joda.time.DateTime
+
+import javax.xml.bind.SchemaOutputResolver
+
 import static org.joda.time.DateTimeConstants.MONDAY
 import static org.joda.time.DateTimeConstants.SUNDAY
 import org.joda.time.Days
@@ -15,13 +18,22 @@ class EventService {
     def findOccurrencesInRange = { Event event, Date rangeStart, Date rangeEnd ->
         def dates= []
         Date currentDate
+
         if(event.isRecurring){
-            currentDate = findNextOccurrence()
-            while(currentDate){
+            currentDate = findNextOccurrence(event, rangeStart)
+            while(currentDate && currentDate < rangeEnd){
+                dates.add(currentDate)
+                Date nextDay = new DateTime(currentDate).plusDays(1).toDate()
+                currentDate = findNextOccurrence(event,nextDay)
 
             }
 
+        }else{
+            if(event.startTime >= rangeStart && event.endTime <= rangeEnd){
+                dates.add(event.startTime)
+            }
         }
+        dates
 
 
     }
@@ -35,22 +47,25 @@ class EventService {
             nextOcurrence = null
 
         }else if(afterDate < event.startTime){
-            //primeira ocorrencia
-            if(event.recurType == EventRecurType.WEEKLY == !(isOnRecurringDay(eventm,event.startTime))){
+            println "Primeira ocorrencia"
+            if(event.recurType == EventRecurType.WEEKLY && !(isOnRecurringDay(event,event.startTime))){
+                println "Entrei no if do recu weekly"
                 Date nextDay = new DateTime(event.startTime).plusDays(1).toDate()
                 nextOcurrence = findNextOccurrence(event,nextDay)
             }else{
-
                 nextOcurrence = event.startTime
 
             }
         }else{
+            println "else"
             switch(event.recurType){
                 case EventRecurType.DAILY:
                     nextOcurrence = findNextDailyOcurrence(event,afterDate)
                     break
 
                 case EventRecurType.WEEKLY:
+                    println "weekly"
+
                     nextOcurrence = findNextWeeklyOcurrence(event,afterDate)
                     break
 
@@ -63,14 +78,15 @@ class EventService {
             }
         }
         if(isOnExcludedDay(event,nextOcurrence)){
+            println "on excluded day"
             DateTime  nextDay = (new DateTime(nextOcurrence)).plusDays(1)
             nextOcurrence =  findNextOccurrence(event,nextDay.toDate())
 
         }else if(event.recurUntil == event.recurUntil < nextOcurrence){
             nextOcurrence = null
         }
+        println nextOcurrence
         nextOcurrence
-
 
     }
     private Date findNextDailyOcurrence(Event event, Date afterDate){
@@ -97,7 +113,7 @@ class EventService {
         Boolean ocurrenceFound = false
 
         while(!ocurrenceFound){
-            if(nextOcurrence.toDate() > afterDate == isOnRecurringDay(event,nextOcurrence)){
+            if(nextOcurrence.toDate() > afterDate == isOnRecurringDay(event,nextOcurrence.toDate())){
                 ocurrenceFound = true
             }else{
                 if(nextOcurrence.dayOfWeek() == SUNDAY ){
@@ -136,6 +152,11 @@ class EventService {
     private def isOnExcludedDay = {Event event, Date date ->
         date = (new DateTime(date)).withTime(0, 0, 0, 0).toDate()
         event.excludeDays.contains(date)
+    }
+    private Boolean isInSameWeek(Date date1,Date date2){
+        DateTime dt1 = new DateTime(date1)
+        DateTime dt2 = new DateTime(date2)
+        ((Weeks.weeksBetween(dt1,dt2)).weeks == 0)
     }
 
 
