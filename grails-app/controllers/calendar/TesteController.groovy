@@ -2,6 +2,7 @@ package calendar
 
 import org.joda.time.DateTime
 import static org.joda.time.DateTimeConstants.MONDAY
+import static org.joda.time.DateTimeConstants.TUESDAY
 import static org.joda.time.DateTimeConstants.WEDNESDAY
 import static org.joda.time.DateTimeConstants.FRIDAY
 
@@ -12,15 +13,28 @@ class TesteController {
         def tomorrow = now.plusDays(1)
 
         def event = new Event(title: "Repeating MWF Event").with {
-            startTime = now.toDate()
-            endTime = now.plusHours(1).toDate()
+            startTime = now.plusDays(1).toDate()
+            endTime = now.plusDays(1).plusHours(1).toDate()
             location = "Regular Location"
             recurType = EventRecurType.WEEKLY
-            [MONDAY,WEDNESDAY,FRIDAY]*.toInteger().each {addToRecurDaysOfWeek(it)}
+            [FRIDAY]*.toInteger().each {addToRecurDaysOfWeek(it)}
+            //recurUntil = now.plusMonths(60).toDate()
             addToExcludeDays(now.withDayOfWeek(MONDAY).plusWeeks(1).toDate())
             isRecurring=true
             save(flush:true)
         }
+        def event2 = new Event(title: "Repeating W Event").with {
+            startTime = now.plusDays(1).toDate()
+            endTime = now.plusDays(1).plusHours(1).toDate()
+            location = "Regular Location"
+            recurType = EventRecurType.WEEKLY
+            [WEDNESDAY]*.toInteger().each {addToRecurDaysOfWeek(it)}
+            //recurUntil = now.plusMonths(60).toDate()
+            addToExcludeDays(now.withDayOfWeek(MONDAY).plusWeeks(1).toDate())
+            isRecurring=true
+            save(flush:true)
+        }
+        /*
         def event2 = new Event(title: event.title ).with {
             sourceEvent = event
             startTime = event.startTime
@@ -35,6 +49,7 @@ class TesteController {
             isRecurring = false
             save()
         }
+        */
 
     }
     def count(){

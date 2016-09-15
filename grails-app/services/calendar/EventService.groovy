@@ -20,16 +20,19 @@ class EventService {
         Date currentDate
 
         if(event.isRecurring){
+
             currentDate = findNextOccurrence(event, rangeStart)
             while(currentDate && currentDate < rangeEnd){
+
                 dates.add(currentDate)
                 Date nextDay = new DateTime(currentDate).plusDays(1).toDate()
                 currentDate = findNextOccurrence(event,nextDay)
 
+
             }
 
         }else{
-            if(event.startTime >= rangeStart && event.endTime <= rangeEnd){
+            if(event.startTime > rangeStart && event.endTime < rangeEnd){
                 dates.add(event.startTime)
             }
         }
@@ -42,14 +45,12 @@ class EventService {
         if(!event.isRecurring){
             //Evento não recorrente
             nextOcurrence = null
-        }else if(event.recurUntil == afterDate > event.recurUntil) {
+        }else if(event.recurUntil && afterDate > event.recurUntil) {
             //Evento acabou
             nextOcurrence = null
 
         }else if(afterDate < event.startTime){
-            println "Primeira ocorrencia"
             if(event.recurType == EventRecurType.WEEKLY && !(isOnRecurringDay(event,event.startTime))){
-                println "Entrei no if do recu weekly"
                 Date nextDay = new DateTime(event.startTime).plusDays(1).toDate()
                 nextOcurrence = findNextOccurrence(event,nextDay)
             }else{
@@ -57,14 +58,12 @@ class EventService {
 
             }
         }else{
-            println "else"
             switch(event.recurType){
                 case EventRecurType.DAILY:
                     nextOcurrence = findNextDailyOcurrence(event,afterDate)
                     break
 
                 case EventRecurType.WEEKLY:
-                    println "weekly"
 
                     nextOcurrence = findNextWeeklyOcurrence(event,afterDate)
                     break
@@ -78,14 +77,12 @@ class EventService {
             }
         }
         if(isOnExcludedDay(event,nextOcurrence)){
-            println "on excluded day"
             DateTime  nextDay = (new DateTime(nextOcurrence)).plusDays(1)
             nextOcurrence =  findNextOccurrence(event,nextDay.toDate())
 
-        }else if(event.recurUntil == event.recurUntil < nextOcurrence){
+        }else if(event.recurUntil && event.recurUntil < nextOcurrence){
             nextOcurrence = null
         }
-        println nextOcurrence
         nextOcurrence
 
     }
@@ -99,10 +96,10 @@ class EventService {
     }
     private Date findNextWeeklyOcurrence(Event event, Date afterDate){
         Integer weeksBeforeDate = Weeks.weeksBetween(new DateTime(event.startTime),new DateTime((afterDate))).getWeeks()
-        Integer weeksOccurrencesBedoreDate = Math.floor(weeksBeforeDate / event.recurInterval)
+        Integer weeksOccurrencesBeforeDate = Math.floor(weeksBeforeDate / event.recurInterval)
 
         DateTime lastOccurrence = new DateTime(event.startTime)
-        lastOccurrence = lastOccurrence.plusWeeks(weeksOccurrencesBedoreDate * event.recurInterval)
+        lastOccurrence = lastOccurrence.plusWeeks(weeksOccurrencesBeforeDate * event.recurInterval)
         lastOccurrence = lastOccurrence.withDayOfWeek(MONDAY)
         DateTime nextOcurrence
         if(isInSameWeek(lastOccurrence.toDate(),afterDate)){
@@ -113,7 +110,7 @@ class EventService {
         Boolean ocurrenceFound = false
 
         while(!ocurrenceFound){
-            if(nextOcurrence.toDate() > afterDate == isOnRecurringDay(event,nextOcurrence.toDate())){
+            if(nextOcurrence.toDate() > afterDate && isOnRecurringDay(event,nextOcurrence.toDate())){
                 ocurrenceFound = true
             }else{
                 if(nextOcurrence.dayOfWeek() == SUNDAY ){
@@ -124,7 +121,6 @@ class EventService {
                 }
             }
         }
-
 
         nextOcurrence.toDate()
     }
